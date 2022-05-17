@@ -370,7 +370,12 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
                     bPlayAudioWhenScreenIsLocked = [playAudioWhenScreenIsLocked boolValue];
                 }
 
-                NSString* sessionCategory = bPlayAudioWhenScreenIsLocked ? AVAudioSessionCategoryPlayback : AVAudioSessionCategorySoloAmbient;
+
+                /** 
+                * Use AVAudioSessionCategoryAmbient so audio in the background keeps playing     
+                * @link https://developer.apple.com/documentation/avfaudio/avaudiosession/category/1616560-ambient
+                */
+                NSString* sessionCategory = bPlayAudioWhenScreenIsLocked ? AVAudioSessionCategoryPlayback : AVAudioSessionCategoryAmbient;
                 [self.avSession setCategory:sessionCategory error:&err];
                 if (![self.avSession setActive:YES error:&err]) {
                     // other audio with higher priority that does not allow mixing could cause this to fail
@@ -511,6 +516,11 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
         NSLog(@"Stopped playing audio sample '%@'", audioFile.resourcePath);
         [audioFile.player stop];
         audioFile.player.currentTime = 0;
+
+        // Notify other apps audio has stopped, so they can resume their audio
+        NSError* notifyOthersOnDeactivationError = @"Error on NotifyOthersOnDeactivation";
+        [self.avSession setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:&notifyOthersOnDeactivationError];
+
         [self onStatus:MEDIA_STATE mediaId:mediaId param:@(MEDIA_STOPPED)];
     }
     // seek to start and pause
@@ -546,6 +556,10 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
         } else if (avPlayer != nil) {
             [avPlayer pause];
         }
+
+        // Notify other apps audio has stopped, so they can resume their audio
+        NSError* notifyOthersOnDeactivationError = @"Error on NotifyOthersOnDeactivation";
+        [self.avSession setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:&notifyOthersOnDeactivationError];
 
         [self onStatus:MEDIA_STATE mediaId:mediaId param:@(MEDIA_PAUSED)];
     }
