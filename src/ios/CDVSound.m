@@ -383,7 +383,7 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
                 * @link https://developer.apple.com/documentation/avfaudio/avaudiosession/category/1616560-ambient
                 */
                 NSString* sessionCategory = bPlayAudioWhenScreenIsLocked ? AVAudioSessionCategoryPlayback : AVAudioSessionCategoryAmbient;
-                [self.avSession setCategory:sessionCategory error:&err];
+                [self.avSession setCategory:sessionCategory withOptions:AVAudioSessionCategoryOptionMixWithOthers error:&err];
                 if (![self.avSession setActive:YES error:&err]) {
                     // other audio with higher priority that does not allow mixing could cause this to fail
                     NSLog(@"Unable to play audio: %@", [err localizedFailureReason]);
@@ -524,9 +524,7 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
         [audioFile.player stop];
         audioFile.player.currentTime = 0;
 
-        // Notify other apps audio has stopped, so they can resume their audio
-        NSError* notifyOthersOnDeactivationError = @"Error on NotifyOthersOnDeactivation";
-        [self.avSession setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:&notifyOthersOnDeactivationError];
+        [self.avSession setActive:NO error:nil];
 
         [self onStatus:MEDIA_STATE mediaId:mediaId param:@(MEDIA_STOPPED)];
     }
@@ -564,9 +562,7 @@ BOOL keepAvAudioSessionAlwaysActive = NO;
             [avPlayer pause];
         }
 
-        // Notify other apps audio has stopped, so they can resume their audio
-        NSError* notifyOthersOnDeactivationError = @"Error on NotifyOthersOnDeactivation";
-        [self.avSession setActive:NO withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error:&notifyOthersOnDeactivationError];
+        [self.avSession setActive:NO error:nil];
 
         [self onStatus:MEDIA_STATE mediaId:mediaId param:@(MEDIA_PAUSED)];
     }
